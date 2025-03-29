@@ -38,7 +38,26 @@ app.post('/api/items', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+app.delete('/api/items/:id', async (req, res) => {
+    try {
+        const { id } = req.params;  // Получаем id товара из параметра запроса
+        const deletedItem = await pool.query(
+            'DELETE FROM items WHERE id = $1 RETURNING *',  // Удаляем товар по id
+            [id]
+        );
 
+        if (deletedItem.rows.length === 0) {
+            // Если товар с таким id не найден, отправляем 404
+            return res.status(404).json({ error: 'Item not found' });
+        }
+
+        // Если товар удален успешно, возвращаем его данные
+        res.json({ message: 'Item deleted successfully', item: deletedItem.rows[0] });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 // Продать товар
 app.put('/api/items/:id/sell', async (req, res) => {
     try {
